@@ -5,12 +5,12 @@
 </template>
 
 <script setup>
-import {onMounted, onUnmounted, reactive, ref} from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 const state = reactive({
   text: '',
   particles: [],
-})
+});
 
 const canvasRef = ref(null);
 
@@ -75,8 +75,9 @@ const drawParticles = (ctx) => {
   }
 }
 
-// 新函数用于绘制时间文本
 const drawText = (ctx) => {
+  // 清除画布以便绘制新文本
+  clear(ctx);
 
   const width = canvasRef.value.width;
   const height = canvasRef.value.height;
@@ -86,12 +87,10 @@ const drawText = (ctx) => {
   ctx.textAlign = 'center';
   ctx.fillText(state.text, width / 2, height / 2);
 
-  const points = getPoints()
-
-  clear(ctx);
+  const points = getPoints();
 
   for (let i = 0; i < points.length; i++) {
-    const [x,y] = points[i];
+    const [x, y] = points[i];
     let p = state.particles[i];
     if (!p) {
       p = new Particle();
@@ -106,15 +105,12 @@ const drawText = (ctx) => {
 }
 
 const getPoints = () => {
-  //拿到像素点信息
   const points = [];
-
   const {data} = ctx.getImageData(0, 0, canvasRef.value.width, canvasRef.value.height);
-
   const gap = 6;
 
   for (let i = 0; i < canvasRef.value.width; i += gap) {
-    for (let j = 0; j < canvasRef.value.height; j++) {
+    for (let j = 0; j < canvasRef.value.height; j += gap) {
       const index = (i + j * canvasRef.value.width) * 4;
       const r = data[index];
       const g = data[index + 1];
@@ -128,19 +124,17 @@ const getPoints = () => {
   return points;
 }
 
-// 修改后的动画循环
 const animate = () => {
 
-  const currentText = getText(); // 获取当前时间
+  requestAnimationFrame(animate);
 
-  if (currentText === state.text) {
-    return;
+  const currentText = getText();
+
+  if (currentText !== state.text) {
+    state.text = currentText;
+    drawText(ctx);
   }
 
-  state.text = currentText;
-
-  clear(ctx);
-  drawText(ctx);
   drawParticles(ctx);
 };
 
@@ -160,17 +154,12 @@ onMounted(() => {
     state.particles.push(new Particle());
   }
 
-  setInterval(() => {
-    animate();
-  }, 1000);
-
-  //animationFrameId = requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 });
 
 onUnmounted(() => {
   //cancelAnimationFrame(animationFrameId);
 });
-
 </script>
 
 <style scoped>
